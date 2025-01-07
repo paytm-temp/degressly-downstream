@@ -79,7 +79,11 @@ public class ProxyController {
 
 	@PostMapping("/traceid/context")
 	@ResponseBody
-	public ResponseEntity<Void> setGlobalTraceId(@RequestBody String traceId) {
+	public ResponseEntity<Void> setGlobalTraceId(@RequestBody String traceId, @RequestHeader MultiValueMap<String, String> headers) {
+		if (!isCachePopulationRequest(headers)) {
+			log.warn("Unauthorized attempt to set global traceId context");
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		}
 		log.debug("Setting global traceId context to: {}", traceId);
 		GlobalTraceIdContext.setGlobalTraceId(traceId);
 		return ResponseEntity.ok().build();
@@ -87,7 +91,11 @@ public class ProxyController {
 
 	@DeleteMapping("/traceid/context")
 	@ResponseBody
-	public ResponseEntity<Void> unsetGlobalTraceId() {
+	public ResponseEntity<Void> unsetGlobalTraceId(@RequestHeader MultiValueMap<String, String> headers) {
+		if (!isCachePopulationRequest(headers)) {
+			log.warn("Unauthorized attempt to unset global traceId context");
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		}
 		log.debug("Unsetting global traceId context");
 		GlobalTraceIdContext.unsetGlobalTraceId();
 		return ResponseEntity.ok().build();

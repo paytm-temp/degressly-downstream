@@ -3,7 +3,11 @@ package com.degressly.proxy.downstream.context;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class GlobalTraceIdContext {
+public final class GlobalTraceIdContext {
+    private GlobalTraceIdContext() {
+        throw new UnsupportedOperationException("Utility class - no instantiation allowed");
+    }
+
     private static String globalTraceId;
 
     public static synchronized void setGlobalTraceId(String traceId) {

@@ -16,6 +16,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
+import com.degressly.proxy.downstream.context.GlobalTraceIdContext;
+
 import static com.degressly.proxy.downstream.Constants.DEGRESSLY_CACHE_POPULATION_REQUEST;
 import static com.degressly.proxy.downstream.Constants.TRACE_ID;
 
@@ -50,6 +52,15 @@ public class ProxyController {
 
 		downstreamHandlerService.populateIdempotencyDetails(requestContext);
 
+		String traceId = requestContext.getTraceId();
+		if (traceId == null) {
+			traceId = GlobalTraceIdContext.getGlobalTraceId();
+			if (traceId != null) {
+				log.debug("Using global traceId context: {}", traceId);
+				requestContext.setTraceId(traceId);
+			}
+		}
+		
 		MDC.put(TRACE_ID, requestContext.getTraceId());
 
 		if (isCachePopulationRequest(headers)) {
@@ -66,4 +77,19 @@ public class ProxyController {
 				&& Boolean.TRUE.toString().equals(headers.getFirst(DEGRESSLY_CACHE_POPULATION_REQUEST));
 	}
 
+	@PostMapping("/traceid/context")
+	@ResponseBody
+	public ResponseEntity<Void> setGlobalTraceId(@RequestBody String traceId) {
+		log.debug("Setting global traceId context to: {}", traceId);
+		GlobalTraceIdContext.setGlobalTraceId(traceId);
+		return ResponseEntity.ok().build();
+	}
+
+	@DeleteMapping("/traceid/context")
+	@ResponseBody
+	public ResponseEntity<Void> unsetGlobalTraceId() {
+		log.debug("Unsetting global traceId context");
+		GlobalTraceIdContext.unsetGlobalTraceId();
+		return ResponseEntity.ok().build();
+	}
 }
